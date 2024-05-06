@@ -1,5 +1,6 @@
 import React from 'react'
 import { Navigate } from 'react-router-dom'
+import ResponsiveAppBar from './AppBar'
 
 type Props = {
     children: React.ReactNode
@@ -12,6 +13,7 @@ const Layout = ({ children, isLogin }: Props) => {
       }
   return (
     <div>
+      <ResponsiveAppBar />
         {children}
     </div>
   )

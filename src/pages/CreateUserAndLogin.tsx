@@ -13,10 +13,12 @@ import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { FormContainer, SubmitHandler, TextFieldElement, useForm } from 'react-hook-form-mui';
-import { zodResolver } from '@hookform/resolvers/zod'
-import * as zod from 'zod'
+import { yupResolver } from '@hookform/resolvers/yup'
+import * as yup from 'yup'
 import { createLoginUser } from '../libs/user';
 import { TLoginCreateUser } from '../types/user';
+import { axiosPrivate, axiosPublic } from '../api/axiosPublic';
+
 
 function Copyright(props: any) {
     return (
@@ -32,22 +34,44 @@ function Copyright(props: any) {
 
 const defaultTheme = createTheme();
 
-const schema = zod.object({
-    name: zod.string(),
-    email: zod.string(),
-    key: zod.string(),
-    secret: zod.string()
+const schema = yup.object({
+    name: yup.string().required(),
+    email: yup.string().required(),
+    key: yup.string().required(),
+    secret: yup.string().required()
 })
 
 
 export default function CreateUserAndLogin() {
 
-    const { handleSubmit, control, formState: { isSubmitting, errors } } = useForm({ resolver: zodResolver(schema) })
+    const { handleSubmit, setError, setFocus, formState: { isSubmitting, errors } } = useForm({ resolver: yupResolver(schema) })
     const mutate = createLoginUser()
 
 
     const onSubmit: SubmitHandler<TLoginCreateUser> = async(data) => {
-        mutate.mutate(data)       
+        mutate.mutate(data, {
+            onError(err: any) {
+                if (!err.response.data.isOk) {
+                    setError("key", {
+                        message: "Bu kalit bilan user ro'yxatdan o'tgan!"
+                    })
+                }
+            },
+
+            async onSuccess(data) {
+                try {
+                    const res = await axiosPrivate.get(`/myself`)
+                    localStorage.setItem("key", data.data.data.key)
+                    localStorage.setItem("secret", data.data.data.secret)
+                    window.location.reload()
+                } catch (error) {
+                    console.log(error)
+                }
+                
+
+              
+            }
+        })       
     }
 
     return (
@@ -72,11 +96,9 @@ export default function CreateUserAndLogin() {
                         <Grid container spacing={2}>
                             <Grid item xs={12} sm={6}>
                                 <TextFieldElement
-                                    autoComplete="given-name"
                                     name="name"
                                     required
                                     fullWidth
-                                    id="firstName"
                                     label="Name"
                                     autoFocus
                                 />
@@ -86,20 +108,18 @@ export default function CreateUserAndLogin() {
                                     type='email'
                                     required
                                     fullWidth
-                                    id="lastName"
                                     label="Email"
                                     name="email"
-                                    autoComplete="email-name"
                                 />
                             </Grid>
                             <Grid item xs={12}>
                                 <TextFieldElement
                                     required
                                     fullWidth
-                                    id="email"
                                     label="Key word"
+                                    error={errors.key ? true : false}
+                                    helperText={errors.key?.message}
                                     name="key"
-                                    autoComplete="key-word"
                                 />
                             </Grid>
                             <Grid item xs={12}>
@@ -109,8 +129,6 @@ export default function CreateUserAndLogin() {
                                     name="secret"
                                     label="Password"
                                     type="password"
-                                    id="password"
-                                    autoComplete="new-password"
                                 />
                             </Grid>
                         </Grid>

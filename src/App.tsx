@@ -8,16 +8,18 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import CreateUserAndLogin from './pages/CreateUserAndLogin';
 import Layout from './components/Layout/Layout';
 import Dashboard from './pages/Dashboard';
+import Books from './pages/Books';
 
 
 export default function App() {
-  const [isLogin, ] = useState<boolean>(localStorage.getItem("access_token") ? true : false)
+  const [isLogin, ] = useState<boolean>(localStorage.getItem("key") && localStorage.getItem("secret") ? true : false)
 
   return (
     <BrowserRouter>
     <Routes>
       <Route path="/" element={!isLogin ? <CreateUserAndLogin /> : <Navigate to={"/dashboard"} />} />
       <Route path="/dashboard" element={<Layout isLogin={isLogin}> <Dashboard /> </Layout>} />
+      <Route path="/books" element={<Layout isLogin={isLogin}> <Books /> </Layout>} />
     </Routes>
   </BrowserRouter>
   );
